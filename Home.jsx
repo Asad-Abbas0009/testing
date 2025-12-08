@@ -143,11 +143,7 @@ const Home = () => {
     },
     {
       id: 10,
-<<<<<<< HEAD
-      title: "Basis Life Support",
-=======
       title: "Basic Life Support",
->>>>>>> bbf63d5f19693683aa60221227c4b9ec44bda18b
       category: "Resuscitation Training & Emergency Care",
       rating: "4.9",
       image: null,
