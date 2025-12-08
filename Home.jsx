@@ -141,7 +141,7 @@ const Home = () => {
     },
     {
       id: 10,
-      title: "BLS",
+      title: "Basic Life Support",
       category: "Resuscitation Training & Emergency Care",
       rating: "4.9",
       image: null,
