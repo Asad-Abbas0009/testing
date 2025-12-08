@@ -129,7 +129,7 @@ const Home = () => {
     },
     {
       id: 9,
-      title: "Fetal Intervention Simulators",
+      title: "Fetal Interventions Simulators",
       category: "Resuscitation Training & Emergency Care",
       rating: "4.9",
       image: null,
