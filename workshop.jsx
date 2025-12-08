@@ -99,8 +99,8 @@ const companyData = {
     title: "Hysteroscope",
     logo: hysteroscopeImg,
     workshops: [
-      { id: 1, name: "Station 1", color: "bg-blue-500", image: hysteroscopeImg, centerId: "c13" },
-      { id: 2, name: "Station 2", color: "bg-green-500", image: hysteroscopeImg, centerId: "c14" },
+      { id: 1, name: "Hysteroscopy - Polyp model", color: "bg-blue-500", image: hysteroscopeImg, centerId: "c13" },
+      { id: 2, name: "Hysteroscopy -Sub mucosal fibroid", color: "bg-green-500", image: hysteroscopeImg, centerId: "c14" },
       { id: 3, name: "Station 3", color: "bg-orange-500", image: hysteroscopeImg, centerId: "c15" },
       { id: 4, name: "Station 4", color: "bg-pink-500", image: hysteroscopeImg, centerId: "c16" },
       { id: 5, name: "Station 5", color: "bg-cyan-500", image: hysteroscopeImg, centerId: "c17" },
