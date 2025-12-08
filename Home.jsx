@@ -4,6 +4,8 @@ import Navbar from '../components/Navbar';
 import HeroSection from '../components/HeroSection';
 import Footer from '../components/Footer';
 import ScrollToTop from '../components/ScrollToTop';
+import blsImg from '../assets/WorkshopImages/bls.jpeg';
+import nrpImg from '../assets/WorkshopImages/nrp.jpeg';
 
 import amniocentesisImg from '../assets/WorkshopImages/amniocentesis.jpg';
 import amnioCvsImg from '../assets/WorkshopImages/amniocvs.jpeg';
@@ -141,12 +143,16 @@ const Home = () => {
     },
     {
       id: 10,
+<<<<<<< HEAD
+      title: "Basis Life Support",
+=======
       title: "Basic Life Support",
+>>>>>>> bbf63d5f19693683aa60221227c4b9ec44bda18b
       category: "Resuscitation Training & Emergency Care",
       rating: "4.9",
       image: null,
       fallbackBg: "bg-indigo-400",
-      logo: fetalTherapyImg,
+      logo: blsImg,
       workshops: [
         "Get real like experience of USG guided procedures"
       ]
@@ -158,7 +164,7 @@ const Home = () => {
       rating: "4.9",
       image: null,
       fallbackBg: "bg-indigo-400",
-      logo: fetalTherapyImg,
+      logo: nrpImg,
       workshops: [
         "Get real like experience of USG guided procedures"
       ]
