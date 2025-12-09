@@ -10,8 +10,8 @@ import laproscopicSimulatorImg from "../assets/WorkshopImages/vintekworkshop1.jp
 import hysteroscopeImg from "../assets/WorkshopImages/Hysteroscope.png";
 import endotrainersImg from "../assets/WorkshopImages/endotrainers.jpg";
 import pphImg from "../assets/WorkshopImages/PPH___.jpg";
-import ppImg from "../assets/WorkshopImages/PPHIMG.jpg";
-import shoImg from "../assets/WorkshopImages/shoulderdystocia.jpg";
+import ppImg from "../assets/WorkshopImages/PPH.jpeg";
+import shoImg from "../assets/WorkshopImages/shoulderdystocia.jpeg";
 import fetalDistressCaesareanImg from "../assets/WorkshopImages/FetalDistress_CaesareanDelivery.jpg";
 import colposcopeImg from "../assets/WorkshopImages/Colposcope.jpg";
 import usgSimulatorImg from "../assets/WorkshopImages/USG Simulator.png";
