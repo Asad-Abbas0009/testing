@@ -10,6 +10,8 @@ import laproscopicSimulatorImg from "../assets/WorkshopImages/vintekworkshop1.jp
 import hysteroscopeImg from "../assets/WorkshopImages/Hysteroscope.png";
 import endotrainersImg from "../assets/WorkshopImages/endotrainers.jpg";
 import pphImg from "../assets/WorkshopImages/PPH___.jpg";
+import pph_Img from "../assets/WorkshopImages/PPH.jpg";
+import shoImg from "../assets/WorkshopImages/shoulderdystocia.jpg";
 import fetalDistressCaesareanImg from "../assets/WorkshopImages/FetalDistress_CaesareanDelivery.jpg";
 import colposcopeImg from "../assets/WorkshopImages/Colposcope.jpg";
 import usgSimulatorImg from "../assets/WorkshopImages/USG Simulator.png";
@@ -132,8 +134,8 @@ const companyData = {
     title: "Labour Ward Simulators",
     logo: pphImg,
     workshops: [
-      { id: 1, name: "PPH", color: "bg-blue-500", image: pphImg, centerId: "c22" },
-      { id: 2, name: "Shoulder dystocia", color: "bg-green-500", image: pphImg, centerId: "c23" },
+      { id: 1, name: "PPH", color: "bg-blue-500", image: pph_Img, centerId: "c22" },
+      { id: 2, name: "Shoulder dystocia", color: "bg-green-500", image: shoImg, centerId: "c23" },
       { id: 3, name: "Eclampsia", color: "bg-orange-500", image: pphImg, centerId: "c24" },
       { id: 4, name: "Amniotic fluid embolism", color: "bg-pink-500", image: pphImg, centerId: "c25" },
       { id: 5, name: "Postpartum collapse", color: "bg-cyan-500", image: pphImg, centerId: "c26" },
