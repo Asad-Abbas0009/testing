@@ -11,6 +11,8 @@ import hysteroscopeImg from "../assets/WorkshopImages/Hysteroscope.png";
 import endotrainersImg from "../assets/WorkshopImages/endotrainers.jpg";
 import pphImg from "../assets/WorkshopImages/PPH___.jpg";
 import ppImg from "../assets/WorkshopImages/PPH.jpeg";
+import eclImg from "../assets/WorkshopImages/eclampsia.jpeg";
+import amnideImg from "../assets/WorkshopImages/amnioticfluidembolism.jpeg";
 import shoImg from "../assets/WorkshopImages/shoulderdystocia.jpeg";
 import fetalDistressCaesareanImg from "../assets/WorkshopImages/FetalDistress_CaesareanDelivery.jpg";
 import colposcopeImg from "../assets/WorkshopImages/Colposcope.jpg";
@@ -136,8 +138,8 @@ const companyData = {
     workshops: [
       { id: 1, name: "PPH", color: "bg-blue-500", image: ppImg, centerId: "c22" },
       { id: 2, name: "Shoulder dystocia", color: "bg-green-500", image: shoImg, centerId: "c23" },
-      { id: 3, name: "Eclampsia", color: "bg-orange-500", image: pphImg, centerId: "c24" },
-      { id: 4, name: "Amniotic fluid embolism", color: "bg-pink-500", image: pphImg, centerId: "c25" },
+      { id: 3, name: "Eclampsia", color: "bg-orange-500", image: eclImg, centerId: "c24" },
+      { id: 4, name: "Amniotic fluid embolism", color: "bg-pink-500", image: amnideImg, centerId: "c25" },
       { id: 5, name: "Postpartum collapse", color: "bg-cyan-500", image: pphImg, centerId: "c26" },
       { id: 6, name: "Birthing", color: "bg-red-500", image: pphImg, centerId: "c27" }
     ]
