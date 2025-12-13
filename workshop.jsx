@@ -14,6 +14,10 @@ import ppImg from "../assets/WorkshopImages/PPH.jpeg";
 import eclImg from "../assets/WorkshopImages/eclampsia.jpeg";
 import postImg from "../assets/WorkshopImages/postpartumcollapse.jpeg";
 import amnideImg from "../assets/WorkshopImages/amnioticfluidembolism.jpeg";
+import bullImg from "../assets/WorkshopImages/bull.jpeg";
+import amioImg from "../assets/WorkshopImages/amio.jpeg";
+import cvsImg from "../assets/WorkshopImages/cvs.jpeg";
+import iutImg from "../assets/WorkshopImages/iut.jpeg";
 import shoImg from "../assets/WorkshopImages/shoulderdystocia.jpeg";
 import fetalDistressCaesareanImg from "../assets/WorkshopImages/FetalDistress_CaesareanDelivery.jpg";
 import colposcopeImg from "../assets/WorkshopImages/Colposcope.jpg";
@@ -159,10 +163,10 @@ const companyData = {
     title: "Fetal Therapy Simulators",
     logo: fetalTherapyImg,
     workshops: [
-      { id: 1, name: "Amniocentesis", color: "bg-blue-500", image: fetalTherapyImg, centerId: "c30" },
-      { id: 2, name: "Chorionic villus sampling", color: "bg-green-500", image: fetalTherapyImg, centerId: "c31" },
-      { id: 3, name: "Bull's eye (reaching the target in fetus)", color: "bg-orange-500", image: fetalTherapyImg, centerId: "c32" },
-      { id: 4, name: "Intrauterine transfusion", color: "bg-pink-500", image: fetalTherapyImg, centerId: "c33" },
+      { id: 1, name: "Amniocentesis", color: "bg-blue-500", image: amioImg, centerId: "c30" },
+      { id: 2, name: "Chorionic villus sampling", color: "bg-green-500", image: cvsImg, centerId: "c31" },
+      { id: 3, name: "Bull's eye (reaching the target in fetus)", color: "bg-orange-500", image: bullImg, centerId: "c32" },
+      { id: 4, name: "Intrauterine transfusion", color: "bg-pink-500", image: iutImg, centerId: "c33" },
       { id: 5, name: "Scar ectopic injection", color: "bg-cyan-500", image: fetalTherapyImg, centerId: "c34" },
       { id: 6, name: "Radiofrequency ablation", color: "bg-red-500", image: fetalTherapyImg, centerId: "c35" }
     ]
