@@ -160,7 +160,7 @@ const companyData = {
   },
 
   "9": { 
-    title: "Fetal Therapy Simulators",
+    title: "Fetal Interventions Simulators",
     logo: fetalTherapyImg,
     workshops: [
       { id: 1, name: "Amniocentesis", color: "bg-blue-500", image: amioImg, centerId: "c30" },
