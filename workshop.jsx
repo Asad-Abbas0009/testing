@@ -33,6 +33,18 @@ import vintekLogo from '../assets/Comapny-Logos/Vintek Logo.png';
 import geLogo from '../assets/Comapny-Logos/GE Logo.jpg';
 import storzLogo from '../assets/Comapny-Logos/Storz Logo.jpg';
 import laerdalLogo from '../assets/Comapny-Logos/Laerdal Logo.jpg';
+const MIN_DATE_ISO = "2026-01-14";
+const MAX_DATE_ISO = "2026-01-20";
+
+const FIXED_DATE_OPTIONS = [
+  { iso: "2026-01-14", day: "Wed", dateNum: 14 },
+  { iso: "2026-01-15", day: "Thu", dateNum: 15 },
+  { iso: "2026-01-16", day: "Fri", dateNum: 16 },
+  { iso: "2026-01-17", day: "Sat", dateNum: 17 },
+  { iso: "2026-01-18", day: "Sun", dateNum: 18 },
+  { iso: "2026-01-19", day: "Mon", dateNum: 19 },
+  { iso: "2026-01-20", day: "Tue", dateNum: 20 },
+];
 
 function cx(...a){ return a.filter(Boolean).join(" "); }
 function f12(hhmm="00:00"){
@@ -255,8 +267,15 @@ const CENTERS = [
 export default function WorkshopSlots(){
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
+  const rawDate = params.get("date");
+  const date =
+    rawDate &&
+    rawDate >= MIN_DATE_ISO &&
+    rawDate <= MAX_DATE_ISO
+      ? rawDate
+      : MIN_DATE_ISO;
 
-  const date = params.get("date") || toLocalISO(new Date());
+  // const date = params.get("date") || toLocalISO(new Date());
   const movieId = params.get("movieId") || "1";
   const [data, setData] = useState({}); // { c1:[...], c2:[...], ... }
   const [loading, setLoading] = useState(true);
@@ -313,10 +332,12 @@ export default function WorkshopSlots(){
   }, [date]);
 
   function gotoDate(iso){
+    if (iso < MIN_DATE_ISO || iso > MAX_DATE_ISO) return;
+
     const next = new URLSearchParams(params);
     next.set("date", iso);
-    setParams(next, { replace:true });
-  }
+    setParams(next, { replace: true });
+}
 
   function goBack(){ 
     navigate(-1); 
@@ -417,7 +438,7 @@ function openSeats(slot, workshop){
         </div>
 
         <div className="mx-auto max-w-7xl px-2 sm:px-4 pb-4">
-          <DatePills options={dates} activeISO={date} onChange={gotoDate} />
+          <DatePills options={FIXED_DATE_OPTIONS} activeISO={date} onChange={gotoDate}/>
         </div>
       </header>
 
