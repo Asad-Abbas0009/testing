@@ -6,6 +6,58 @@ const router = Router();
 /* =========================================================
    CREATE BOOKING
    ========================================================= */
+// router.post("/", async (req, res) => {
+//   const { slotId, name, email, mobile_no, amount_paid, seats } = req.body;
+
+//   if (!slotId || !name || !Array.isArray(seats) || seats.length !== 1) {
+//     return res.status(400).json({ error: "Invalid booking data" });
+//   }
+
+//   const seatId = Number(seats[0]);
+//   const conn = await pool.getConnection();
+
+//   try {
+//     await conn.beginTransaction();
+
+//     // Create booking
+//     const [b] = await conn.query(
+//       `
+//       INSERT INTO bookings
+//       (slot_id, name, email, mobile_no, amount_paid, currency, status)
+//       VALUES (?, ?, ?, ?, ?, 'INR', 'PENDING_PAYMENT')
+//       `,
+//       [slotId, name, email, mobile_no, amount_paid]
+//     );
+
+//     const bookingId = b.insertId;
+
+//     await conn.query(
+//       `
+//       INSERT INTO booking_seats
+//       (booking_id, slot_id, seat_id, seat_price)
+//       VALUES (?, ?, ?, ?)
+//       `,
+//       [bookingId, slotId, seatId, amount_paid]
+//     );
+
+//     await conn.commit();
+
+//     res.status(201).json({
+//       bookingId,
+//       amount: amount_paid,
+//       paymentUrl:
+//         `https://aicog2026registration.conferencesinternational.in/payment/?Id=${bookingId}&amount=${amount_paid}`
+//     });
+
+//   } catch (err) {
+//     await conn.rollback();
+//     console.error(err);
+//     res.status(500).json({ error: "BOOKING_FAILED" });
+//   } finally {
+//     conn.release();
+//   }
+// });
+
 router.post("/", async (req, res) => {
   const { slotId, name, email, mobile_no, amount_paid, seats } = req.body;
 
@@ -19,7 +71,7 @@ router.post("/", async (req, res) => {
   try {
     await conn.beginTransaction();
 
-    // Create booking
+    /* 1️⃣ Create booking → PENDING_PAYMENT */
     const [b] = await conn.query(
       `
       INSERT INTO bookings
@@ -31,6 +83,7 @@ router.post("/", async (req, res) => {
 
     const bookingId = b.insertId;
 
+    /* 2️⃣ Lock seat */
     await conn.query(
       `
       INSERT INTO booking_seats
@@ -45,22 +98,86 @@ router.post("/", async (req, res) => {
     res.status(201).json({
       bookingId,
       amount: amount_paid,
+      status: "PENDING_PAYMENT",
       paymentUrl:
         `https://aicog2026registration.conferencesinternational.in/payment/?Id=${bookingId}&amount=${amount_paid}`
     });
 
   } catch (err) {
     await conn.rollback();
-    console.error(err);
+
+    if (err.code === "ER_DUP_ENTRY") {
+      return res.status(409).json({
+        error: "Seat already booked. Please choose another slot."
+      });
+    }
+
+    console.error("BOOKING_FAILED:", err);
     res.status(500).json({ error: "BOOKING_FAILED" });
+
   } finally {
     conn.release();
   }
 });
 
+
+
 /* =========================================================
    PAYMENT CALLBACK (CALLED BY AICOG SERVER)
    ========================================================= */
+// router.post("/payment-callback", async (req, res) => {
+//   const { bookingId, transactionId, paymentStatus } = req.body;
+
+//   if (!bookingId || !transactionId) {
+//     return res.status(400).json({ error: "Missing fields" });
+//   }
+
+//   const conn = await pool.getConnection();
+//   try {
+//     await conn.beginTransaction();
+
+//     const [[booking]] = await conn.query(
+//       `SELECT status FROM bookings WHERE id = ? FOR UPDATE`,
+//       [bookingId]
+//     );
+
+//     if (!booking) {
+//       await conn.rollback();
+//       return res.status(404).json({ error: "Booking not found" });
+//     }
+
+//     if (booking.status === "CONFIRMED") {
+//       await conn.rollback();
+//       return res.json({ ok: true });
+//     }
+
+//     const finalStatus =
+//       paymentStatus === "failed" || paymentStatus === "cancelled"
+//         ? "CANCELLED"
+//         : "CONFIRMED";
+
+//     await conn.query(
+//       `
+//       UPDATE bookings
+//       SET status = ?, payment_ref = ?
+//       WHERE id = ?
+//       `,
+//       [finalStatus, transactionId, bookingId]
+//     );
+
+//     await conn.commit();
+//     res.json({ ok: true });
+
+//   } catch (err) {
+//     await conn.rollback();
+//     console.error(err);
+//     res.status(500).json({ error: "CALLBACK_FAILED" });
+//   } finally {
+//     conn.release();
+//   }
+// });
+
+
 router.post("/payment-callback", async (req, res) => {
   const { bookingId, transactionId, paymentStatus } = req.body;
 
@@ -69,6 +186,7 @@ router.post("/payment-callback", async (req, res) => {
   }
 
   const conn = await pool.getConnection();
+
   try {
     await conn.beginTransaction();
 
@@ -82,31 +200,45 @@ router.post("/payment-callback", async (req, res) => {
       return res.status(404).json({ error: "Booking not found" });
     }
 
-    if (booking.status === "CONFIRMED") {
+    // Idempotent
+    if (booking.status !== "PENDING_PAYMENT") {
       await conn.rollback();
       return res.json({ ok: true });
     }
 
-    const finalStatus =
-      paymentStatus === "failed" || paymentStatus === "cancelled"
-        ? "CANCELLED"
-        : "CONFIRMED";
+    const failed =
+      paymentStatus === "failed" || paymentStatus === "cancelled";
 
-    await conn.query(
-      `
-      UPDATE bookings
-      SET status = ?, payment_ref = ?
-      WHERE id = ?
-      `,
-      [finalStatus, transactionId, bookingId]
-    );
+    if (failed) {
+      /* ❌ Payment failed */
+      await conn.query(
+        `UPDATE bookings
+         SET status = 'CANCELLED', payment_ref = ?
+         WHERE id = ?`,
+        [transactionId, bookingId]
+      );
+
+      // Release seat
+      await conn.query(
+        `DELETE FROM booking_seats WHERE booking_id = ?`,
+        [bookingId]
+      );
+    } else {
+      /* ✅ Payment success */
+      await conn.query(
+        `UPDATE bookings
+         SET status = 'CONFIRMED', payment_ref = ?
+         WHERE id = ?`,
+        [transactionId, bookingId]
+      );
+    }
 
     await conn.commit();
     res.json({ ok: true });
 
   } catch (err) {
     await conn.rollback();
-    console.error(err);
+    console.error("CALLBACK_FAILED:", err);
     res.status(500).json({ error: "CALLBACK_FAILED" });
   } finally {
     conn.release();
