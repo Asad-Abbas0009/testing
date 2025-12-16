@@ -8,52 +8,73 @@ export default function Confirmation() {
 
   const [booking, setBooking] = useState(null);
   const [qrCodeData, setQrCodeData] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   const API_BASE =
     import.meta.env.VITE_API_URL || "https://onesimulation.site";
 
   /* ======================================================
-     FETCH BOOKING FROM BACKEND
+     FETCH BOOKING FROM BACKEND (SOURCE OF TRUTH)
      ====================================================== */
   useEffect(() => {
-    if (!bookingId) return;
+    if (!bookingId) {
+      setError("Invalid booking link");
+      setLoading(false);
+      return;
+    }
 
     fetch(`${API_BASE}/api/bookings/${bookingId}`)
       .then((res) => {
         if (!res.ok) throw new Error("Booking not found");
         return res.json();
       })
-      .then((data) => setBooking(data))
-      .catch((err) => console.error(err));
+      .then((data) => {
+        setBooking(data);
+        setLoading(false);
+      })
+      .catch(() => {
+        setError("Booking not found or expired");
+        setLoading(false);
+      });
   }, [bookingId]);
 
   /* ======================================================
-     GENERATE QR CODE
+     GENERATE QR CODE (ONLY IF CONFIRMED)
      ====================================================== */
   useEffect(() => {
-    if (!booking) return;
+    if (!booking || booking.status !== "CONFIRMED") return;
 
     const generateQRCode = async () => {
-      const qrData = {
+      const qrPayload = {
         bookingId: booking.bookingId,
-        userName: booking.userName,
-        userEmail: booking.userEmail,
-        userMobile: booking.userMobile,
-        seatNumber: booking.seatNumber,
+        workshop: booking.workshop_title,
+        simulator: booking.company_name,
+        venue: booking.venue,
         date: booking.date,
         startTime: booking.start_time,
         endTime: booking.end_time,
+        seat: booking.seatNumber,
+        attendee: booking.userName,
+        mobile: booking.userMobile,
         timestamp: Date.now()
       };
 
-      const qr = await QRCode.toDataURL(JSON.stringify(qrData));
+      const qr = await QRCode.toDataURL(
+        JSON.stringify(qrPayload),
+        { width: 200, margin: 2 }
+      );
+
       setQrCodeData(qr);
     };
 
     generateQRCode();
   }, [booking]);
 
-  if (!booking) {
+  /* ======================================================
+     STATES
+     ====================================================== */
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         Loading booking details…
@@ -61,29 +82,45 @@ export default function Confirmation() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-red-600">
+        {error}
+      </div>
+    );
+  }
+
+  /* ======================================================
+     UI
+     ====================================================== */
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-blue-50 py-4 px-4">
       <div className="max-w-2xl mx-auto">
 
-        {/* SUCCESS HEADER */}
+        {/* HEADER */}
         <div className="text-center mb-4">
-          <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-3">
+          <div
+            className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3
+              ${booking.status === "CONFIRMED" ? "bg-green-500" : "bg-yellow-500"}`}
+          >
             ✓
           </div>
-          <h1 className="text-2xl font-bold">Booking Confirmed!</h1>
+
+          <h1 className="text-2xl font-bold">
+            {booking.status === "CONFIRMED"
+              ? "Booking Confirmed!"
+              : "Payment Pending"}
+          </h1>
+
           <p className="text-sm text-gray-600">
-            Your seat has been reserved successfully.
+            Booking ID: {booking.bookingId}
           </p>
         </div>
 
-        {/* DETAILS CARD */}
+        {/* DETAILS */}
         <div className="bg-white rounded-xl shadow-lg p-5 mb-4">
-          <h2 className="font-semibold mb-2">Booking Details</h2>
-          <p className="text-sm text-gray-500">
-            Booking ID: {booking.bookingId}
-          </p>
+          <div className="grid grid-cols-2 gap-4">
 
-          <div className="grid grid-cols-2 gap-4 mt-4">
             <div>
               <h3 className="font-semibold mb-2">Attendee</h3>
               <p>{booking.userName}</p>
@@ -92,31 +129,42 @@ export default function Confirmation() {
             </div>
 
             <div>
-              <h3 className="font-semibold mb-2">Slot</h3>
-              <p>Date: {booking.date}</p>
+              <h3 className="font-semibold mb-2">Workshop</h3>
+              <p>{booking.company_name}</p>
+              <p>{booking.workshop_title}</p>
+              <p>{booking.venue}</p>
               <p>
-                Time: {booking.start_time} - {booking.end_time}
+                {booking.date} <br />
+                {booking.start_time} - {booking.end_time}
               </p>
-              <p>Seat: {booking.seatNumber}</p>
               <p className="font-bold text-green-600">
                 ₹{booking.amount}
               </p>
             </div>
           </div>
 
-          {/* QR */}
-          <div className="mt-6 text-center">
-            <h3 className="font-semibold mb-2">
-              Venue Verification QR Code
-            </h3>
-            {qrCodeData && (
-              <img
-                src={qrCodeData}
-                alt="QR Code"
-                className="mx-auto w-32 h-32"
-              />
-            )}
-          </div>
+          {/* QR CODE */}
+          {booking.status === "CONFIRMED" && (
+            <div className="mt-6 text-center">
+              <h3 className="font-semibold mb-2">
+                Venue Verification QR Code
+              </h3>
+
+              {qrCodeData && (
+                <img
+                  src={qrCodeData}
+                  alt="QR Code"
+                  className="mx-auto w-32 h-32"
+                />
+              )}
+            </div>
+          )}
+
+          {booking.status !== "CONFIRMED" && (
+            <div className="mt-4 text-center text-yellow-600 text-sm">
+              Please complete payment to activate QR code.
+            </div>
+          )}
         </div>
 
         {/* ACTIONS */}
