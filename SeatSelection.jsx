@@ -344,6 +344,7 @@ export default function SeatSelection() {
         workshop_title: workshopTitle,
         venue: q.get("venue") || ""
       };
+      console.log("BOOKING PAYLOAD:", payload);
 
       const resp = await createBookingSimple(payload); // expects 201 and booking id
 
