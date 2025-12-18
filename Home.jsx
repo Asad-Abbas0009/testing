@@ -150,7 +150,7 @@ const Home = () => {
       fallbackBg: "bg-indigo-400",
       logo: blsImg,
       workshops: [
-        "Get real like experience of USG guided procedures"
+        "Hands-on Practice on high-fidelity mannequin for chest compressions, rescue breathing, and airway management"
       ]
     },
     {
@@ -162,7 +162,7 @@ const Home = () => {
       fallbackBg: "bg-indigo-400",
       logo: nrpImg,
       workshops: [
-        "Get real like experience of USG guided procedures"
+        "Hands-on Practice on high-fidelity mannequin to prepare clinicians for life-saving interventions during the "Golden Minute" after birth"
       ]
     },
     // {
