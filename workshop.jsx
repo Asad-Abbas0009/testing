@@ -26,6 +26,7 @@ import lapsimImg from "../assets/WorkshopImages/Picture1.png";
 import roboticSimulatorImg from "../assets/WorkshopImages/roboticSimulator.png";
 import virtualRealityImg from "../assets/WorkshopImages/VirtualReality.jpg";
 import fetalTherapyImg from "../assets/WorkshopImages/fetaltherapysimulators.png";
+import blsImg from '../assets/WorkshopImages/bls.jpeg';
 
 // Company Logos
 import oneSimLogo from '../assets/Comapny-Logos/One-Sim-Logo.png';
@@ -183,7 +184,7 @@ const companyData = {
     title: "BLS",
     logo: fetalTherapyImg,
     workshops: [
-      { id: 1, name: "Basic Life  Support", color: "bg-blue-500", image: fetalTherapyImg, centerId: "c37" },
+      { id: 1, name: "Basic Life  Support", color: "bg-blue-500", image: blsImg, centerId: "c37" },
     ]
   },
   "11": { 
