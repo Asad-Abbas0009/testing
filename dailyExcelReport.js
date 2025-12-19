@@ -94,9 +94,9 @@ async function sendEmail(filePath, reportDate) {
     from: process.env.EMAIL_FROM,
     to: "registration@aicog2026.com",
     bcc: [
-      "asadabbas4338@gmail.com",
+      "asad.a@onesimulation.co.in",
       "ankur.s@onesimulation.co.in",
-      "ritik315cool@gmail.com"
+      "ritik.k@onesimulation.co.in"
     ],
     subject: `AICOG Daily Booking Report – ${reportDate}`,
     text: `Please find attached the booking report for ${reportDate}.`,
