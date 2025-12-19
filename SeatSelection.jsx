@@ -35,7 +35,13 @@ export default function SeatSelection() {
   const [selectedTimeSlot, setSelectedTimeSlot] = useState(null); // mini-slot index 0..3
   const [selectedSeatId, setSelectedSeatId] = useState(null);     // REAL seat id from API
   const [showUserDetailsPopup, setShowUserDetailsPopup] = useState(false);
-  const [userDetails, setUserDetails] = useState({ name: "", mobile: "", email: "" });
+const [userDetails, setUserDetails] = useState({
+  name: "",
+  mobile: "",
+  email: "",
+  registrationId: ""   // ✅ NEW
+});
+
   const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   // Backend state
@@ -59,12 +65,25 @@ export default function SeatSelection() {
   const validName    = (n) => String(n || "").trim().length >= 2;
   const validMobile  = (m) => /^[6-9]\d{9}$/.test(onlyDigits(m).slice(-10)); // India 10-digit starting 6–9
   const validEmail   = (e) => /\S+@\S+\.\S+/.test(String(e || "").trim());
-
+  const validRegistrationId = (r) => String(r || "").trim().length > 0;
+  
   const isNameValid   = validName(userDetails.name);
   const isMobileValid = validMobile(userDetails.mobile);
   const isEmailValid  = validEmail(userDetails.email);
+  const isRegistrationIdValid = validRegistrationId(userDetails.registrationId);
   // Can confirm booking only after: valid details + OTP verified + terms accepted
-  const canConfirmBooking = isNameValid && isMobileValid && isEmailValid && emailVerified && acceptedTerms && !booking && selectedTimeSlot !== null && !!selectedSeatId;
+const canConfirmBooking =
+  isNameValid &&
+  isMobileValid &&
+  isEmailValid &&
+  isRegistrationIdValid &&   // ✅ REQUIRED
+  emailVerified &&
+  acceptedTerms &&
+  !booking &&
+  selectedTimeSlot !== null &&
+  !!selectedSeatId;
+
+
   // Can send OTP if email is valid and OTP not sent yet
   const canSendOtp = isEmailValid && !otpSent && !sendingOtp;
 
@@ -331,19 +350,20 @@ export default function SeatSelection() {
       //   payment_ref: `demo_${Date.now()}`
       // };
 
-      const payload = {
-        slotId: Number(resolvedSlotId || 0),
-        name: userDetails.name.trim(),
-        email: userDetails.email.trim(),
-        mobile_no: userDetails.mobile.trim(),
-        seats: [Number(selectedSeatId)],
-        amount_paid: total,
+    const payload = {
+    slotId: Number(resolvedSlotId),
+    name: userDetails.name.trim(),
+    email: userDetails.email.trim(),
+    mobile_no: userDetails.mobile.trim(),
+    registration_id: userDetails.registrationId.trim(), // ✅ NEW
+    seats: [Number(selectedSeatId)],
+    amount_paid: total,
 
-  // ✅ NEW — persist workshop data
-        company_name: companyName,
-        workshop_title: workshopTitle,
-        venue: q.get("venue") || ""
-      };
+    company_name: companyName,
+    workshop_title: workshopTitle,
+    venue: q.get("venue") || ""
+    };
+
       console.log("BOOKING PAYLOAD:", payload);
 
       const resp = await createBookingSimple(payload); // expects 201 and booking id
@@ -358,15 +378,15 @@ export default function SeatSelection() {
 
       // Build return URL for payment gateway to redirect back to
       const returnUrl = `${window.location.origin}/payment-success`;
-      
+
       // Sanitize values for URL
       const sanitizedBookingId = String(bookingId).replace(/[^0-9]/g, '');
       const sanitizedAmount = Number(bookingAmount).toFixed(2);
-      
+
       // Redirect to payment page with booking_id, amount, and return URL
       // Note: The AICOG payment page should be configured to redirect back to returnUrl after Razorpay payment
       const paymentUrl = `https://aicog2026registration.conferencesinternational.in/payment/?Id=${sanitizedBookingId}&amount=${sanitizedAmount}&returnUrl=${encodeURIComponent(returnUrl)}`;
-      
+
       // Store booking details in sessionStorage for after payment return
       const slot = timeSlots[selectedTimeSlot];
       const bookingData = {
@@ -383,7 +403,7 @@ export default function SeatSelection() {
         userMobile: String(userDetails.mobile.trim()).slice(0, 20),
         userEmail: String(userDetails.email.trim()).slice(0, 100)
       };
-      
+
       try {
         sessionStorage.setItem('pendingBooking', JSON.stringify(bookingData));
       } catch (storageError) {
@@ -428,8 +448,8 @@ export default function SeatSelection() {
         <div className="text-red-500 text-4xl mb-4">⚠️</div>
         <h2 className="text-xl font-semibold text-gray-900 mb-2">Loading Error</h2>
         <p className="text-red-600 mb-4">{error}</p>
-        <button 
-          onClick={() => window.location.reload()} 
+        <button
+          onClick={() => window.location.reload()}
           className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
         >
           Try Again
