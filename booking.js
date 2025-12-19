@@ -15,7 +15,10 @@ router.post("/", async (req, res) => {
     amount_paid,
     seats,
 
-    // ✅ workshop data
+    // ✅ NEW FIELD
+    registration_id,
+
+    // workshop data
     company_name,
     workshop_title,
     venue
@@ -45,6 +48,7 @@ router.post("/", async (req, res) => {
         name,
         email,
         mobile_no,
+        registration_id,
         amount_paid,
         currency,
         status,
@@ -52,13 +56,14 @@ router.post("/", async (req, res) => {
         workshop_title,
         venue
       )
-      VALUES (?, ?, ?, ?, ?, 'INR', 'PENDING_PAYMENT', ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, 'INR', 'PENDING_PAYMENT', ?, ?, ?)
       `,
       [
         slotId,
         name,
         email,
         mobile_no,
+        registration_id || null,
         amount_paid,
         company_name || null,
         workshop_title || null,
@@ -68,7 +73,7 @@ router.post("/", async (req, res) => {
 
     const bookingId = b.insertId;
 
-    /* 2️⃣ Lock seat (UNIQUE(slot_id, seat_id) enforces safety) */
+    /* 2️⃣ Lock seat */
     await conn.query(
       `
       INSERT INTO booking_seats
@@ -104,7 +109,7 @@ router.post("/", async (req, res) => {
 });
 
 /* =========================================================
-   PAYMENT CALLBACK (AICOG SERVER)
+   PAYMENT CALLBACK
    ========================================================= */
 router.post("/payment-callback", async (req, res) => {
   const { bookingId, transactionId, paymentStatus } = req.body;
@@ -128,7 +133,6 @@ router.post("/payment-callback", async (req, res) => {
       return res.status(404).json({ error: "Booking not found" });
     }
 
-    // 🔁 Idempotent callback
     if (booking.status !== "PENDING_PAYMENT") {
       await conn.rollback();
       return res.json({ ok: true });
@@ -139,7 +143,6 @@ router.post("/payment-callback", async (req, res) => {
       paymentStatus === "cancelled";
 
     if (failed) {
-      /* ❌ Payment failed → release seat */
       await conn.query(
         `
         UPDATE bookings
@@ -154,7 +157,6 @@ router.post("/payment-callback", async (req, res) => {
         [bookingId]
       );
     } else {
-      /* ✅ Payment success */
       await conn.query(
         `
         UPDATE bookings
@@ -178,50 +180,8 @@ router.post("/payment-callback", async (req, res) => {
 });
 
 /* =========================================================
-   FETCH BOOKING (CONFIRMATION + QR PAGE)
+   FETCH BOOKING
    ========================================================= */
-// router.get("/:id", async (req, res) => {
-//   const bookingId = Number(req.params.id);
-//   if (!Number.isInteger(bookingId)) {
-//     return res.status(400).json({ error: "Invalid bookingId" });
-//   }
-
-//   const conn = await pool.getConnection();
-//   try {
-//     const [[row]] = await conn.query(
-//       `
-//       SELECT
-//         b.id                AS bookingId,
-//         b.name              AS userName,
-//         b.email             AS userEmail,
-//         b.mobile_no         AS userMobile,
-//         b.amount_paid       AS amount,
-//         b.status,
-//         b.company_name,
-//         b.workshop_title,
-//         b.venue,
-//         s.session_date      AS date,
-//         s.start_time,
-//         s.end_time,
-//         bs.seat_id          AS seatNumber
-//       FROM bookings b
-//       JOIN slots s ON s.id = b.slot_id
-//       JOIN booking_seats bs ON bs.booking_id = b.id
-//       WHERE b.id = ?
-//       `,
-//       [bookingId]
-//     );
-
-//     if (!row) {
-//       return res.status(404).json({ error: "Booking not found" });
-//     }
-
-//     res.json(row);
-
-//   } finally {
-//     conn.release();
-//   }
-// });
 router.get("/:id", async (req, res) => {
   const bookingId = Number(req.params.id);
   if (!Number.isInteger(bookingId)) {
@@ -237,6 +197,7 @@ router.get("/:id", async (req, res) => {
         b.name AS userName,
         b.email AS userEmail,
         b.mobile_no AS userMobile,
+        b.registration_id AS registrationId,
         b.amount_paid AS amount,
         b.status,
 
