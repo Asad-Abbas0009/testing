@@ -88,23 +88,29 @@ export default function UserDetailsModal({
             )}
           </div>
           {/* Registration ID Field */}
-            <div>
+          <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-                Registration ID <span className="text-red-500">*</span>
-            </label>
-            <input
-                type="text"
-                value={userDetails.registrationId}
-                onChange={(e) =>
-                setUserDetails(prev => ({
-                    ...prev,
-                    registrationId: e.target.value
-                }))
-                }
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                placeholder="Enter your AICOG Registration ID"
-            />
-            </div>
+              Registration ID <span className="text-red-500">*</span>
+          </label>
+
+          <input
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            maxLength={4}
+            value={userDetails.registrationId}
+            onChange={(e) => {
+            const value = e.target.value.replace(/\D/g, "").slice(0, 4);
+            setUserDetails(prev => ({
+            ...prev,
+            registrationId: value
+          }));
+        }}
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+          placeholder="Enter your AICOG Registration ID"
+          />
+        </div>
+
             {!userDetails.registrationId && (
                 <p className="mt-1 text-xs text-red-600">
                     Registration ID is required.
