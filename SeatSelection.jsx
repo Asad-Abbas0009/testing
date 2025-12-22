@@ -31,8 +31,11 @@ export default function SeatSelection() {
   const workshopTitle = q.get("workshopTitle") || "Workshop";
   const companyName = q.get("companyName") || "Company";
 
+  // Check if this is a 40-seat center (c37, c38, c39)
+  const is40SeatCenter = workshopId === "c37" || workshopId === "c38" || workshopId === "c39";
+
   // UI state
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState(null); // mini-slot index 0..3
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState(null); // mini-slot index 0..3 OR seat index for 40-seat mode
   const [selectedSeatId, setSelectedSeatId] = useState(null);     // REAL seat id from API
   const [showUserDetailsPopup, setShowUserDetailsPopup] = useState(false);
 const [userDetails, setUserDetails] = useState({
@@ -170,7 +173,7 @@ const canConfirmBooking =
     return () => { alive = false; };
   }, [resolvedSlotId]);
 
-  // ---------- Map mini-slot index (0..3) -> seat info from DB ----------
+  // ---------- Map seats -> seat info from DB ----------
   const miniSeatStatus = useMemo(() => {
     const byIndex = {};
     const sorted = [...seatsRaw].sort((a, b) => {
@@ -178,8 +181,10 @@ const canConfirmBooking =
       const bi = (b.displayNo ?? b.col_number ?? 0);
       return ai - bi;
     });
-    // only first 4 seats map to 4 mini-slots
-    sorted.slice(0, 4).forEach((s, idx) => {
+    
+    // For 40-seat centers, show all 40 seats; otherwise show first 4 for mini-slots
+    const maxSeats = is40SeatCenter ? 40 : 4;
+    sorted.slice(0, maxSeats).forEach((s, idx) => {
       byIndex[idx] = {
         id: Number(s.id),
         status: s.status, // "AVAILABLE" | "BOOKED"
@@ -188,7 +193,7 @@ const canConfirmBooking =
       };
     });
     return byIndex;
-  }, [seatsRaw, basePrice]);
+  }, [seatsRaw, basePrice, is40SeatCenter]);
 
   // Clear selection if it becomes invalid
   useEffect(() => {
@@ -389,15 +394,18 @@ const canConfirmBooking =
 
       // Store booking details in sessionStorage for after payment return
       const slot = timeSlots[selectedTimeSlot];
+      const seatInfo = miniSeatStatus[selectedTimeSlot];
       const bookingData = {
         bookingId: String(bookingId),
         companyName: String(companyName).slice(0, 200),
         workshopTitle: String(workshopTitle).slice(0, 200),
         venue: String(q.get("venue") || "").slice(0, 200),
         date: String(date).slice(0, 20),
-        startTime: slot ? String(slot.displayStart).slice(0, 20) : "",
-        endTime: slot ? String(slot.displayEnd).slice(0, 20) : "",
-        seatNumber: slot ? String(`${slot.displayStart}–${slot.displayEnd}`).slice(0, 50) : "",
+        startTime: slot ? String(slot.displayStart).slice(0, 20) : (is40SeatCenter ? String(start).slice(0, 20) : ""),
+        endTime: slot ? String(slot.displayEnd).slice(0, 20) : (is40SeatCenter ? String(end).slice(0, 20) : ""),
+        seatNumber: is40SeatCenter && seatInfo 
+          ? String(`Seat ${seatInfo.displayNo}`).slice(0, 50)
+          : slot ? String(`${slot.displayStart}–${slot.displayEnd}`).slice(0, 50) : "",
         amount: String(bookingAmount),
         userName: String(userDetails.name.trim()).slice(0, 100),
         userMobile: String(userDetails.mobile.trim()).slice(0, 20),
@@ -481,7 +489,7 @@ const canConfirmBooking =
           </div>
         </div>
 
-        {/* 15-minute mini-slots (DB-driven availability) */}
+        {/* 15-minute mini-slots or 40 seats (DB-driven availability) */}
         <TimeSlotGrid
           timeSlots={timeSlots}
           miniSeatStatus={miniSeatStatus}
@@ -490,6 +498,7 @@ const canConfirmBooking =
             setSelectedTimeSlot(slotIndex);
             setSelectedSeatId(seatId);
           }}
+          is40SeatMode={is40SeatCenter}
         />
 
         {/* Booking Summary Card */}
@@ -502,6 +511,8 @@ const canConfirmBooking =
           onBookClick={openUserDetailsPopup}
           booking={booking}
           disabled={selectedTimeSlot === null}
+          miniSeatStatus={miniSeatStatus}
+          is40SeatMode={is40SeatCenter}
         />
       </main>
 
@@ -509,8 +520,18 @@ const canConfirmBooking =
         <div className="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between" aria-live="polite">
           <div className="text-sm">
             {selectedTimeSlot !== null ? (
-              <>Selected: <span className="font-semibold">1</span> • Total: <span className="font-semibold">₹ {total}</span></>
-            ) : "Select a 15-minute mini-slot to continue"}
+              <>
+                Selected: <span className="font-semibold">
+                  {is40SeatCenter && miniSeatStatus[selectedTimeSlot] 
+                    ? `Seat ${miniSeatStatus[selectedTimeSlot].displayNo}` 
+                    : "1"}
+                </span> • Total: <span className="font-semibold">₹ {total}</span>
+              </>
+            ) : (
+              is40SeatCenter 
+                ? "Select a seat to continue" 
+                : "Select a 15-minute mini-slot to continue"
+            )}
           </div>
           <div className="flex items-center gap-2">
             <button
