@@ -92,7 +92,7 @@ async function resolveCenterId(rawCenter) {
 
 /**
  * GET /api/slots/seats/:slotId
- * Return mini 6-seat grid for a slot
+ * Return seats for a slot (6 seats for regular centers, 40 seats for c37, c38, c39)
  */
 router.get("/seats/:slotId", async (req, res) => {
   const slotId = Number(req.params.slotId);
@@ -106,16 +106,27 @@ router.get("/seats/:slotId", async (req, res) => {
     const slot = slotRows && slotRows[0];
     if (!slot) return res.status(404).json({ message: "Slot not found" });
 
-    // Make sure seats MS-1..6 exist
-    const cols = [1, 2, 3, 4, 5, 6];
+    // Check center code to determine seat count
+    const [centerRows] = await pool.query(
+      "SELECT code FROM centers WHERE id = ? LIMIT 1",
+      [slot.center_id]
+    );
+    const centerCode = centerRows && centerRows[0]?.code?.toLowerCase();
+    
+    // Centers c37, c38, c39 need 40 seats, others use 6 seats
+    const isSpecialCenter = centerCode === "c37" || centerCode === "c38" || centerCode === "c39";
+    const seatCount = isSpecialCenter ? 40 : 6;
+    const cols = Array.from({ length: seatCount }, (_, i) => i + 1);
+    
+    // Make sure seats exist
     await insertSeatsWithRetries(pool, slot.center_id, "MS", cols);
 
     const [seats] = await pool.query(
       `SELECT id, col_number
          FROM seats
-        WHERE center_id = ? AND row_label = 'MS' AND col_number BETWEEN 1 AND 6
+        WHERE center_id = ? AND row_label = 'MS' AND col_number BETWEEN 1 AND ?
         ORDER BY col_number ASC`,
-      [slot.center_id]
+      [slot.center_id, seatCount]
     );
 
     const [bookedRows] = await pool.query(
