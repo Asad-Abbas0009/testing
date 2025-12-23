@@ -39,7 +39,47 @@ router.post("/", async (req, res) => {
   try {
     await conn.beginTransaction();
 
-    /* 1️⃣ Create booking (PENDING_PAYMENT) */
+    /* 0️⃣ Get slot date first to check bookings for that specific date */
+    const [slotRows] = await conn.query(
+      `SELECT session_date FROM slots WHERE id = ? LIMIT 1`,
+      [slotId]
+    );
+
+    if (!slotRows || slotRows.length === 0) {
+      await conn.rollback();
+      return res.status(404).json({ error: "Slot not found" });
+    }
+
+    const slotDate = slotRows[0].session_date;
+    const slotDateStr = slotDate instanceof Date 
+      ? slotDate.toISOString().split('T')[0] 
+      : String(slotDate).split('T')[0];
+
+    /* 1️⃣ Check daily booking limit (max 3 bookings per day per email/mobile for the slot's date) */
+    const [existingBookings] = await conn.query(
+      `
+      SELECT COUNT(*) as count
+      FROM bookings b
+      JOIN slots s ON s.id = b.slot_id
+      WHERE (b.email = ? OR b.mobile_no = ?)
+        AND DATE(s.session_date) = ?
+        AND b.status IN ('CONFIRMED', 'PENDING_PAYMENT')
+      `,
+      [email, mobile_no, slotDateStr]
+    );
+
+    const bookingCount = existingBookings[0]?.count || 0;
+    if (bookingCount >= 3) {
+      await conn.rollback();
+      return res.status(429).json({
+        error: `Daily booking limit reached for ${slotDateStr}. You can book a maximum of 3 slots per day.`,
+        limit: 3,
+        current: bookingCount,
+        date: slotDateStr
+      });
+    }
+
+    /* 2️⃣ Create booking (PENDING_PAYMENT) */
     const [b] = await conn.query(
       `
       INSERT INTO bookings
@@ -73,7 +113,7 @@ router.post("/", async (req, res) => {
 
     const bookingId = b.insertId;
 
-    /* 2️⃣ Lock seat */
+    /* 3️⃣ Lock seat */
     await conn.query(
       `
       INSERT INTO booking_seats
