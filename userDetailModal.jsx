@@ -12,6 +12,7 @@ export default function UserDetailsModal({
   isNameValid,
   isMobileValid,
   isEmailValid,
+  isRegistrationIdValid,
   otpSent,
   setOtpSent,
   emailVerified,
@@ -34,6 +35,14 @@ export default function UserDetailsModal({
   onVerifyOtp,
   canSendOtp
 }) {
+  // Track which fields have been touched/interacted with
+  const [touchedFields, setTouchedFields] = React.useState({
+    name: false,
+    registrationId: false,
+    mobile: false,
+    email: false
+  });
+
   if (!isOpen) return null;
 
   const handleClose = () => {
@@ -43,7 +52,12 @@ export default function UserDetailsModal({
     setOtpStatus("");
     setEmailVerified(false);
     setAcceptedTerms(false);
+    setTouchedFields({ name: false, registrationId: false, mobile: false, email: false });
     onClose();
+  };
+
+  const handleFieldBlur = (fieldName) => {
+    setTouchedFields(prev => ({ ...prev, [fieldName]: true }));
   };
 
   const handleEmailChange = (e) => {
@@ -59,7 +73,7 @@ export default function UserDetailsModal({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-      <div className="bg-white rounded-xl max-w-lg w-full p-6 shadow-2xl my-8">
+      <div className="bg-white rounded-xl max-w-lg w-full p-6 shadow-2xl my-8 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-semibold text-gray-900">Enter Your Details</h3>
           <button
@@ -80,42 +94,53 @@ export default function UserDetailsModal({
               type="text"
               value={userDetails.name}
               onChange={(e) => setUserDetails(prev => ({ ...prev, name: e.target.value }))}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              onBlur={() => handleFieldBlur('name')}
+              className={cx(
+                "w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors",
+                touchedFields.name && !isNameValid
+                  ? "border-red-300 focus:border-red-500 focus:ring-red-500"
+                  : "border-gray-300"
+              )}
               placeholder="Enter your full name"
             />
-            {userDetails.name && !isNameValid && (
+            {touchedFields.name && !isNameValid && (
               <p className="mt-1 text-xs text-red-600">Enter at least 2 characters.</p>
             )}
           </div>
+
           {/* Registration ID Field */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Registration ID <span className="text-red-500">*</span>
-          </label>
-
-          <input
-            type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            maxLength={4}
-            value={userDetails.registrationId}
-            onChange={(e) => {
-            const value = e.target.value.replace(/\D/g, "").slice(0, 4);
-            setUserDetails(prev => ({
-            ...prev,
-            registrationId: value
-          }));
-        }}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-          placeholder="Enter your AICOG Registration ID"
-          />
-        </div>
-
-            {!userDetails.registrationId && (
-                <p className="mt-1 text-xs text-red-600">
-                    Registration ID is required.
-                </p>
+            </label>
+            <input
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={4}
+              value={userDetails.registrationId}
+              onChange={(e) => {
+                const value = e.target.value.replace(/\D/g, "").slice(0, 4);
+                setUserDetails(prev => ({
+                  ...prev,
+                  registrationId: value
+                }));
+              }}
+              onBlur={() => handleFieldBlur('registrationId')}
+              className={cx(
+                "w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors",
+                touchedFields.registrationId && !isRegistrationIdValid
+                  ? "border-red-300 focus:border-red-500 focus:ring-red-500"
+                  : "border-gray-300"
+              )}
+              placeholder="Enter your AICOG Registration ID"
+            />
+            {touchedFields.registrationId && !isRegistrationIdValid && (
+              <p className="mt-1 text-xs text-red-600">
+                Registration ID is required.
+              </p>
             )}
+          </div>
           {/* Mobile Field */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -125,10 +150,16 @@ export default function UserDetailsModal({
               type="tel"
               value={userDetails.mobile}
               onChange={(e) => setUserDetails(prev => ({ ...prev, mobile: e.target.value }))}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              onBlur={() => handleFieldBlur('mobile')}
+              className={cx(
+                "w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors",
+                touchedFields.mobile && !isMobileValid
+                  ? "border-red-300 focus:border-red-500 focus:ring-red-500"
+                  : "border-gray-300"
+              )}
               placeholder="Enter your mobile number"
             />
-            {userDetails.mobile && !isMobileValid && (
+            {touchedFields.mobile && !isMobileValid && (
               <p className="mt-1 text-xs text-red-600">Enter a 10-digit Indian mobile (starts 6–9).</p>
             )}
           </div>
@@ -143,7 +174,14 @@ export default function UserDetailsModal({
                 type="email"
                 value={userDetails.email}
                 onChange={handleEmailChange}
-                className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                onBlur={() => handleFieldBlur('email')}
+                className={cx(
+                  "flex-1 px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors",
+                  touchedFields.email && !isEmailValid
+                    ? "border-red-300 focus:border-red-500 focus:ring-red-500"
+                    : "border-gray-300",
+                  otpSent && !emailVerified && "bg-gray-50"
+                )}
                 placeholder="Enter your email address"
                 disabled={otpSent && !emailVerified}
               />
@@ -152,9 +190,9 @@ export default function UserDetailsModal({
                   onClick={onSendOtp}
                   disabled={!canSendOtp}
                   className={cx(
-                    "px-6 py-3 rounded-lg text-sm font-medium whitespace-nowrap",
+                    "px-6 py-3 rounded-lg text-sm font-medium whitespace-nowrap transition-colors",
                     canSendOtp
-                      ? "bg-blue-600 text-white hover:bg-blue-700"
+                      ? "bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800"
                       : "bg-gray-200 text-gray-500 cursor-not-allowed"
                   )}
                 >
@@ -162,7 +200,7 @@ export default function UserDetailsModal({
                 </button>
               )}
             </div>
-            {userDetails.email && !isEmailValid && (
+            {touchedFields.email && !isEmailValid && (
               <p className="mt-1 text-xs text-red-600">Enter a valid email (e.g., name@example.com).</p>
             )}
             {otpStatus && !otpSent && (
@@ -245,20 +283,22 @@ export default function UserDetailsModal({
         </div>
 
         {/* Terms and Conditions Section */}
-        <div className="mt-6 border border-gray-200 rounded-lg overflow-hidden">
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-2 border-b border-gray-200">
+        <div className="mt-6 border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-3 border-b border-gray-200">
             <h4 className="text-sm font-semibold text-gray-900">Terms & Conditions</h4>
           </div>
-          <div className="bg-white px-4 py-3 max-h-48 overflow-y-auto text-xs text-gray-600 leading-relaxed space-y-2">
-            <div className="mb-3">
-              <p className="font-semibold text-gray-800 text-sm mb-2">Simulation Metaverse at AICOG 2026, Delhi</p>
-              <p className="mb-2">• First time in AICOG</p>
-              <p className="mb-2">• Real-life-like simulation for skills covering all subspecialities of obstetrics and gynaecology...</p>
-              <p className="mb-2">• More than 3000 delegates will get an opportunity to practice hand-on on simulation models</p>
+          <div className="bg-white px-4 py-4 max-h-48 overflow-y-auto text-xs text-gray-700 leading-relaxed space-y-3 custom-scrollbar">
+            <div>
+              <p className="font-semibold text-gray-900 text-sm mb-2">Simulation Metaverse at AICOG 2026, Delhi</p>
+              <ul className="space-y-1.5 ml-4">
+                <li className="list-disc">First time in AICOG</li>
+                <li className="list-disc">Real-life-like simulation for skills covering all subspecialities of obstetrics and gynaecology...</li>
+                <li className="list-disc">More than 3000 delegates will get an opportunity to practice hand-on on simulation models</li>
+              </ul>
             </div>
             <div>
-              <p className="font-semibold text-gray-800 mb-2">Terms & Conditions:</p>
-              <ol className="list-decimal list-inside space-y-1.5 pl-2">
+              <p className="font-semibold text-gray-900 mb-2">Terms & Conditions:</p>
+              <ol className="list-decimal list-inside space-y-1.5 ml-2">
                 <li>Only registered delegates for AICOG can apply</li>
                 <li>Online booking is available at the AICOG website</li>
                 <li>One candidate can book a maximum of 3 slots, priced at INR 500/- per slot</li>
@@ -338,4 +378,3 @@ export default function UserDetailsModal({
     </div>
   );
 }
-
