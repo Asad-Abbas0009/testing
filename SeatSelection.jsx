@@ -570,6 +570,7 @@ const canConfirmBooking =
         isNameValid={isNameValid}
         isMobileValid={isMobileValid}
         isEmailValid={isEmailValid}
+        isRegistrationIdValid={isRegistrationIdValid}
         otpSent={otpSent}
         setOtpSent={setOtpSent}
         emailVerified={emailVerified}
