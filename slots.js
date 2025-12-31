@@ -92,7 +92,7 @@ async function resolveCenterId(rawCenter) {
 
 /**
  * GET /api/slots/seats/:slotId
- * Return seats for a slot (6 seats for regular centers, 40 seats for c37, c38, c39)
+ * Return seats for a slot (6 seats for regular centers, 40 seats for c37, c38)
  */
 router.get("/seats/:slotId", async (req, res) => {
   const slotId = Number(req.params.slotId);
@@ -113,8 +113,8 @@ router.get("/seats/:slotId", async (req, res) => {
     );
     const centerCode = centerRows && centerRows[0]?.code?.toLowerCase();
     
-    // Centers c37, c38, c39 need 40 seats, others use 6 seats
-    const isSpecialCenter = centerCode === "c37" || centerCode === "c38" || centerCode === "c39";
+    // Centers c37, c38 need 40 seats, others use 6 seats
+    const isSpecialCenter = centerCode === "c37" || centerCode === "c38";
     const seatCount = isSpecialCenter ? 40 : 6;
     const cols = Array.from({ length: seatCount }, (_, i) => i + 1);
     
