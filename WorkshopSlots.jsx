@@ -27,6 +27,7 @@ import roboticSimulatorImg from "../assets/WorkshopImages/roboticSimulator.png";
 import virtualRealityImg from "../assets/WorkshopImages/VirtualReality.jpg";
 import fetalTherapyImg from "../assets/WorkshopImages/fetaltherapysimulators.png";
 import blsImg from '../assets/WorkshopImages/bls.jpeg';
+import nrpImg from '../assets/WorkshopImages/nrp.jpeg';
 
 // Company Logos
 import oneSimLogo from '../assets/Comapny-Logos/One-Sim-Logo.png';
@@ -187,11 +188,10 @@ const companyData = {
     ]
   },
   "11": { 
-    title: "NRP",
+    title: "Neonatal Resuscitation",
     logo: fetalTherapyImg,
     workshops: [
-      { id: 1, name: "Term infant", color: "bg-blue-500", image: fetalTherapyImg, centerId: "c38" },
-      { id: 2, name: "Preterm infant", color: "bg-green-500", image: fetalTherapyImg, centerId: "c39" },
+      { id: 1, name: "Neonatal Resuscitation", color: "bg-blue-500", image: nrpImg, centerId: "c38" }
     ]
   }
 };
@@ -254,8 +254,7 @@ const CENTERS = [
   { id: "c34", title: "Scar ectopic injection",                     color: "bg-cyan-500",   venue: "One Simulation" },
   { id: "c35", title: "Radiofrequency ablation",                    color: "bg-red-500",    venue: "One Simulation" },
   { id: "c37", title: "Basic Cardiopulmonary Life Support",                         color: "bg-cyan-500",   venue: "AIIMS" },
-  { id: "c38", title: "Term infant",                                color: "bg-cyan-500",   venue: "Dr Bisht" },
-  { id: "c39", title: "Preterm infant",                              color: "bg-cyan-500",   venue: "Dr Bisht" },
+  { id: "c38", title: "Neonatal Resuscitation",                                color: "bg-cyan-500",   venue: "Dr Bisht" },
           
 ];
 
