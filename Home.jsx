@@ -143,7 +143,7 @@ const Home = () => {
     },
     {
       id: 10,
-      title: "Basic Life Support",
+      title: "Basic Cardiopulmonary Life Support",
       category: "Resuscitation Training & Emergency Care",
       rating: "4.9",
       image: null,
@@ -153,18 +153,20 @@ const Home = () => {
         "Hands-on Practice on high-fidelity mannequin for chest compressions, rescue breathing, and airway management"
       ]
     },
-    {
-      id: 11,
-      title: "Neonatal Resuscitation",
-      category: "Resuscitation Training & Emergency Care",
-      rating: "4.9",
-      image: null,
-      fallbackBg: "bg-indigo-400",
-      logo: nrpImg,
-      workshops: [
-        "Hands-on Practice on high-fidelity mannequin to prepare clinicians for life-saving interventions during the "Golden Minute" after birth"
-      ]
-    },
+
+{
+  id: 11,
+  title: "Neonatal Resuscitation",
+  category: "Resuscitation Training & Emergency Care",
+  rating: "4.9",
+  image: null,
+  fallbackBg: "bg-indigo-400",
+  logo: nrpImg,
+  workshops: [
+    'Hands-on Practice on high-fidelity mannequin to prepare clinicians for life-saving interventions during the "Golden Minute" after birth'
+  ]
+},
+
     // {
     //   id: 10,
     //   title: "NN Recusc",
