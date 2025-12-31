@@ -180,10 +180,10 @@ const companyData = {
     ]
   },
   "10": { 
-    title: "BLS",
+    title: "Basic Cardiopulmonary Life Support",
     logo: fetalTherapyImg,
     workshops: [
-      { id: 1, name: "Basic Life  Support", color: "bg-blue-500", image: blsImg, centerId: "c37" },
+      { id: 1, name: "Basic Cardiopulmonary Life Support", color: "bg-blue-500", image: blsImg, centerId: "c37" },
     ]
   },
   "11": { 
@@ -253,7 +253,7 @@ const CENTERS = [
   { id: "c33", title: "Intrauterine transfusion",                   color: "bg-pink-500",   venue: "One Simulation" },
   { id: "c34", title: "Scar ectopic injection",                     color: "bg-cyan-500",   venue: "One Simulation" },
   { id: "c35", title: "Radiofrequency ablation",                    color: "bg-red-500",    venue: "One Simulation" },
-  { id: "c37", title: "Basic Life Support",                         color: "bg-cyan-500",   venue: "AIIMS" },
+  { id: "c37", title: "Basic Cardiopulmonary Life Support",                         color: "bg-cyan-500",   venue: "AIIMS" },
   { id: "c38", title: "Term infant",                                color: "bg-cyan-500",   venue: "Dr Bisht" },
   { id: "c39", title: "Preterm infant",                              color: "bg-cyan-500",   venue: "Dr Bisht" },
           
