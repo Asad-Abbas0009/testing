@@ -31,8 +31,8 @@ export default function SeatSelection() {
   const workshopTitle = q.get("workshopTitle") || "Workshop";
   const companyName = q.get("companyName") || "Company";
 
-  // Check if this is a 40-seat center (c37, c38, c39)
-  const is40SeatCenter = workshopId === "c37" || workshopId === "c38" || workshopId === "c39";
+  // Check if this is a 40-seat center (c37, c38)
+  const is40SeatCenter = workshopId === "c37" || workshopId === "c38";
 
   // UI state
   const [selectedTimeSlot, setSelectedTimeSlot] = useState(null); // mini-slot index 0..3 OR seat index for 40-seat mode
