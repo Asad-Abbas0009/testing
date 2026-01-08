@@ -154,7 +154,7 @@ const companyData = {
       { id: 2, name: "Shoulder dystocia", color: "bg-green-500", image: shoImg, centerId: "c23" },
       { id: 3, name: "Eclampsia", color: "bg-orange-500", image: eclImg, centerId: "c24" },
       { id: 4, name: "Amniotic fluid embolism", color: "bg-pink-500", image: amnideImg, centerId: "c25" },
-      { id: 5, name: "Postpartum collapse", color: "bg-cyan-500", image: postImg, centerId: "c26" },
+      // { id: 5, name: "Postpartum collapse", color: "bg-cyan-500", image: postImg, centerId: "c26" },
       { id: 6, name: "Breech Vaginal Birth", color: "bg-red-500", image: pphImg, centerId: "c27" }
     ]
   },
