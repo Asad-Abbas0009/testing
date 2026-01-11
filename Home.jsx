@@ -54,7 +54,7 @@ const Home = () => {
       fallbackBg: "bg-gradient-to-br from-blue-400 to-cyan-300",
       logo: lapsimImg,
       workshops: [
-        "High fidelity simulator with tactile feedback, detailed graphics; includes pre-set modules from basic to advanced laparoscopic procedures."
+        "Laprascopy simulator for basic gyne lap surgery and hand eye coordination"
       ]
     },
     {
