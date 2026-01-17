@@ -301,7 +301,7 @@ export default function UserDetailsModal({
               <ol className="list-decimal list-inside space-y-1.5 ml-2">
                 <li>Only registered delegates for AICOG can apply</li>
                 <li>Online booking is available at the AICOG website</li>
-                <li>One candidate can book a maximum of 3 slots, priced at INR 500/- per slot</li>
+                <li>One candidate can book a maximum of 3 slots, priced at INR 700/- per slot</li>
                 <li>A QR code will be issued on booking</li>
                 <li>The candidates must ensure that they arrive as per the allotted time slot and leave at the end of the time slot to ensure smooth functioning of the arena</li>
                 <li>Candidate late by half an hour from the slot timing will be denied entry</li>
