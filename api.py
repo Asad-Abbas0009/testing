@@ -1318,7 +1318,15 @@ def checkin_badge(payload: Dict[str, Any] = Body(...)):
         visitor_id = int(payload.get("visitor_id"))
     except (TypeError, ValueError):
         raise HTTPException(status_code=422, detail="A numeric visitor_id is required")
+    capture_error = str(payload.get("error") or "").strip()
+    if capture_error and not payload.get("image"):
+        logger.error(
+            "Kiosk could not capture the visitor badge for %s: %s",
+            visitor_id, capture_error[:400],
+        )
+        return {"status": "ok", "queued": False}
     badge, mime = _badge_image_bytes(payload.get("image"))
+    logger.info("Received check-in badge for visitor %s (%d bytes)", visitor_id, len(badge))
     visitor = vision.db.get_visitor(visitor_id)
     if visitor is None:
         raise HTTPException(status_code=404, detail="No such visitor")
