@@ -28,11 +28,26 @@ export function PassGeneratedScreen({ visitor, mode = "checkin", apiBase, onDone
   // The check-in screen already draws the visitor badge. Capture that same
   // card and hand the JPEG to the backend for the WhatsApp header.
   useEffect(() => {
-    if (isCheckout || badgeSent.current) return;
-    const node = badgeRef.current;
-    if (!node || !apiBase) return;
+    if (isCheckout || !apiBase) return;
     let cancelled = false;
-    const sendBadge = async () => {
+    let timer = 0;
+
+    const report = (message: string) => {
+      fetch(`${apiBase}/checkin/badge`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ visitor_id: visitor.id, error: message }),
+      }).catch(() => {});
+    };
+
+    const sendBadge = async (attempt: number) => {
+      if (cancelled || badgeSent.current) return;
+      const node = badgeRef.current;
+      if (!node) {
+        if (attempt < 5) timer = window.setTimeout(() => sendBadge(attempt + 1), 400);
+        else report("visitor badge was not on the check-in screen");
+        return;
+      }
       try {
         const images = Array.from(node.querySelectorAll("img"));
         await Promise.all(
@@ -46,21 +61,30 @@ export function PassGeneratedScreen({ visitor, mode = "checkin", apiBase, onDone
                   })
           )
         );
-        if (cancelled) return;
+        if (cancelled || badgeSent.current) return;
         const { toJpeg } = await import("html-to-image");
-        const image = await toJpeg(node, { quality: 0.9, pixelRatio: 2, cacheBust: true });
-        if (cancelled || !image) return;
-        badgeSent.current = true;
-        await fetch(`${apiBase}/checkin/badge`, {
+        const image = await toJpeg(node, { quality: 0.92, pixelRatio: 2 });
+        if (cancelled || badgeSent.current || !image) return;
+        const response = await fetch(`${apiBase}/checkin/badge`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ visitor_id: visitor.id, image }),
         });
+        if (!response.ok) throw new Error(`badge upload HTTP ${response.status}`);
+        badgeSent.current = true;
       } catch (err) {
+        if (cancelled || badgeSent.current) return;
+        const message = err instanceof Error ? err.message : String(err);
+        if (attempt < 2) {
+          timer = window.setTimeout(() => sendBadge(attempt + 1), 800);
+          return;
+        }
         console.error("Could not send the visitor badge on WhatsApp:", err);
+        report(message);
       }
     };
-    const timer = window.setTimeout(sendBadge, 300);
+
+    timer = window.setTimeout(() => sendBadge(0), 400);
     return () => {
       cancelled = true;
       window.clearTimeout(timer);
@@ -201,8 +225,8 @@ export function PassGeneratedScreen({ visitor, mode = "checkin", apiBase, onDone
         </div>
       </main>
 
-      {/* Same badge as Print, drawn off-screen so WhatsApp can capture it. */}
-      <div className="pointer-events-none fixed top-0" style={{ left: "-2400px" }} aria-hidden>
+      {/* Same badge as Print, outside the visible page so it can be captured. */}
+      <div className="pointer-events-none fixed top-0" style={{ left: "-100vw" }} aria-hidden>
         <VisitorBadgeCard ref={badgeRef} visitor={visitor} />
       </div>
 
