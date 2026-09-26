@@ -169,116 +169,30 @@ messages = MessageQueue(
 )
 
 
-def _ascii_label(text: Any, fallback: str, limit: int = 32) -> str:
-    """cv2.putText only draws ASCII. Keep the pass readable for any name."""
-    cleaned = str(text or "").encode("ascii", "replace").decode("ascii")
-    cleaned = " ".join(cleaned.split())
-    return (cleaned or fallback)[:limit]
-
-
-def _enrolment_portrait(visitor_id: Any):
-    """
-    The reference photo already stored at registration, for the portrait on the
-    pass. Not the WhatsApp image by itself — that image is the rendered pass.
-    """
-    if visitor_id is None:
-        return None
-    try:
-        raw = vision.db.enrolment_photo_path(int(visitor_id))
-    except Exception as e:
-        logger.info("No enrolment photo for visitor %s: %s", visitor_id, e)
-        return None
-    if not raw:
-        return None
-    snapshot_dir = Path("snapshots").resolve()
-    candidate = Path(str(raw))
-    if not candidate.is_file():
-        candidate = snapshot_dir / Path(str(raw).replace("\\", "/")).name
-    try:
-        candidate.resolve().relative_to(snapshot_dir)
-    except ValueError:
-        logger.warning("Enrolment photo for visitor %s is outside snapshots", visitor_id)
-        return None
-    if not candidate.is_file():
-        return None
-    portrait = cv2.imread(str(candidate))
-    if portrait is None or portrait.size == 0:
-        return None
-    return portrait
-
-
-def _visitor_pass_jpeg(name: str, visitor_id: str, when: str, department: str,
-                       portrait) -> bytes:
-    """
-    JPEG of the visitor pass sent as the WhatsApp template image.
-
-    Same facts as the kiosk print layout: name, visitor id, check-in time,
-    department, and the registration portrait when one exists. OpenCV draws it
-    so no second card stack is added.
-    """
-    width, height = 720, 1040
-    card = np.full((height, width, 3), (255, 244, 232), dtype=np.uint8)
-    blue = (175, 64, 30)
-    ink = (40, 28, 20)
-    cv2.rectangle(card, (0, 0), (width, 168), blue, -1)
-    cv2.rectangle(card, (0, height - 96), (width, height), blue, -1)
-
-    def center(text: str, y: int, scale: float, color, thick: int = 2,
-               font=cv2.FONT_HERSHEY_DUPLEX) -> None:
-        size, _ = cv2.getTextSize(text, font, scale, thick)
-        x = max(16, (width - size[0]) // 2)
-        cv2.putText(card, text, (x, y), font, scale, color, thick, cv2.LINE_AA)
-
-    center("ONE SIMULATION", 78, 1.05, (255, 255, 255))
-    center("VISITOR PASS", 128, 0.7, (230, 220, 200), 1, cv2.FONT_HERSHEY_SIMPLEX)
-
-    radius = 118
-    cx, cy = width // 2, 360
-    if portrait is not None:
-        face = cv2.resize(portrait, (radius * 2, radius * 2))
-        mask = np.zeros((radius * 2, radius * 2), dtype=np.uint8)
-        cv2.circle(mask, (radius, radius), radius - 3, 255, -1)
-        y0, x0 = cy - radius, cx - radius
-        roi = card[y0:y0 + radius * 2, x0:x0 + radius * 2]
-        card[y0:y0 + radius * 2, x0:x0 + radius * 2] = cv2.add(
-            cv2.bitwise_and(roi, roi, mask=cv2.bitwise_not(mask)),
-            cv2.bitwise_and(face, face, mask=mask),
-        )
-    else:
-        cv2.circle(card, (cx, cy), radius, (230, 206, 186), -1)
-        center(_ascii_label(name[:1], "V", 1).upper(), cy + 28, 2.4, blue, 3)
-    cv2.circle(card, (cx, cy), radius, (255, 255, 255), 8)
-
-    center(_ascii_label(name, "Visitor").upper(), 560, 1.0, ink)
-    center("VISITOR ID", 640, 0.55, (130, 100, 70), 1, cv2.FONT_HERSHEY_SIMPLEX)
-    center(_ascii_label(visitor_id, "-", 16), 710, 1.35, blue)
-    center(_ascii_label(when, "", 16), 790, 0.85, ink, 1)
-    center(_ascii_label(department, "reception", 28).upper(), 860, 0.8, ink, 1)
-    center("Keep this pass with you", height - 38, 0.6, (255, 255, 255), 1,
-           cv2.FONT_HERSHEY_SIMPLEX)
-
-    ok, encoded = cv2.imencode(".jpg", card, [int(cv2.IMWRITE_JPEG_QUALITY), 85])
-    if not ok:
-        return b""
-    return encoded.tobytes()
-
-
 def notify_check_in(visitor: Dict[str, Any], visit_id: Optional[int] = None,
-                    department: str = "") -> None:
+                    department: str = "", badge_image: Optional[bytes] = None,
+                    badge_mime: str = "image/jpeg") -> bool:
     """
     Queue the check-in confirmation for a visitor who has just arrived.
 
     Called after the visit is open, so a message is only ever sent for a
-    check-in that is actually on record. Failures are the queue's problem: this
-    returns immediately either way.
+    check-in that is actually on record. The image is the kiosk visitor badge,
+    already drawn for this check-in — this function does not draw another card.
+    Failures are the queue's problem: this returns immediately either way.
     """
     if not CONFIG.messaging.ENABLED:
-        return
+        return False
     phone = str(visitor.get("phone") or "").strip()
     if not phone:
         logger.info("No number on file for visitor %s — no check-in message",
                     visitor.get("id"))
-        return
+        return False
+    if not badge_image:
+        logger.info(
+            "Check-in message for visitor %s waits for the kiosk badge image",
+            visitor.get("id"),
+        )
+        return False
 
     try:
         from zoneinfo import ZoneInfo
@@ -290,19 +204,7 @@ def notify_check_in(visitor: Dict[str, Any], visit_id: Optional[int] = None,
     visitor_name = str(visitor.get("name") or "Visitor")
     visitor_id_text = str(visitor_id) if visitor_id is not None else ""
     department_text = department or str(visitor.get("department") or "reception")
-    # visitor_checkin_pass has an IMAGE header. The header is this rendered
-    # pass (name, id, time, department, registration portrait), uploaded by the
-    # WhatsApp provider. The raw snapshot is not sent on its own.
-    pass_image = _visitor_pass_jpeg(
-        visitor_name, visitor_id_text, when, department_text,
-        _enrolment_portrait(visitor_id),
-    )
-    if not pass_image:
-        logger.error(
-            "Could not render the visitor pass for %s — check-in message not queued",
-            visitor_id,
-        )
-        return
+    # Header image is the badge the kiosk already rendered for this check-in.
     messages.send(OutboundMessage(
         to=phone,
         template=CONFIG.messaging.CHECKIN_TEMPLATE,
@@ -318,12 +220,13 @@ def notify_check_in(visitor: Dict[str, Any], visit_id: Optional[int] = None,
             "checkin_time",
             "department",
         ],
-        header_image=pass_image,
-        header_mime="image/jpeg",
+        header_image=badge_image,
+        header_mime=badge_mime or "image/jpeg",
         visitor_id=visitor_id,
         visit_id=visit_id,
         kind="check_in",
     ))
+    return True
 
 
 # Which terminal wrote a visit, for sites that run more than one kiosk.
@@ -1385,6 +1288,55 @@ def _blocked_match(embedding) -> Optional[int]:
     return None
 
 
+def _badge_image_bytes(image: Any) -> tuple:
+    """JPEG or PNG bytes from the kiosk badge capture. Rejects anything else."""
+    raw = str(image or "").strip()
+    if "," in raw:
+        raw = raw.split(",", 1)[1]
+    try:
+        data = base64.b64decode(raw)
+    except Exception:
+        raise HTTPException(status_code=422, detail="Badge image is not valid base64")
+    if len(data) < 100 or len(data) > 4_000_000:
+        raise HTTPException(status_code=422, detail="Badge image is missing or too large")
+    if data[:2] == b"\xff\xd8":
+        return data, "image/jpeg"
+    if data[:8] == b"\x89PNG\r\n\x1a\n":
+        return data, "image/png"
+    raise HTTPException(status_code=422, detail="Badge image must be a JPEG or PNG")
+
+
+@app.post("/checkin/badge")
+def checkin_badge(payload: Dict[str, Any] = Body(...)):
+    """
+    Queue the check-in WhatsApp message using the badge the kiosk just drew.
+
+    The image is the existing visitor pass (PrintBadgeModal), captured on the
+    pass screen. This route does not draw a second card.
+    """
+    try:
+        visitor_id = int(payload.get("visitor_id"))
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=422, detail="A numeric visitor_id is required")
+    badge, mime = _badge_image_bytes(payload.get("image"))
+    visitor = vision.db.get_visitor(visitor_id)
+    if visitor is None:
+        raise HTTPException(status_code=404, detail="No such visitor")
+    open_visit = None
+    try:
+        open_visit = vision.db.open_visit_for(visitor_id)
+    except Exception as e:
+        logger.error("Could not read the open visit for %s: %s", visitor_id, e)
+    queued = notify_check_in(
+        visitor,
+        (open_visit or {}).get("id"),
+        (open_visit or {}).get("department") or "",
+        badge_image=badge,
+        badge_mime=mime,
+    )
+    return {"status": "ok", "queued": queued}
+
+
 @app.post("/register")
 def register_user(payload: Dict[str, Any], response: Response):
     """
@@ -1944,10 +1896,10 @@ def admin_visitor_message(visitor_id: int, _: None = Depends(require_admin)):
         raise HTTPException(status_code=503, detail="Messaging is switched off")
 
     open_visit = vision.db.open_visit_for(visitor_id)
-    notify_check_in(visitor, open_visit.get("id") if open_visit else None,
-                    (open_visit or {}).get("department", ""))
+    queued = notify_check_in(visitor, open_visit.get("id") if open_visit else None,
+                             (open_visit or {}).get("department", ""))
     logger.info("Staff asked for the check-in message to be sent again to visitor %s", visitor_id)
-    return {"status": "ok", "queued": True, "name": visitor.get("name")}
+    return {"status": "ok", "queued": queued, "name": visitor.get("name")}
 
 
 @app.post("/admin/visitor/{visitor_id}/merge")
